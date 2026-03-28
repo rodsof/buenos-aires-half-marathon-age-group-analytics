@@ -1,5 +1,9 @@
 # Buenos Aires Half Marathon (21K) Analytics
 
+[![Dashboard](https://img.shields.io/badge/Dashboard-Live-brightgreen)](https://buenos-aires-half-marathon-age-group.onrender.com/)
+
+![alt text](images/marimo_dashboard_tile_2.png)
+
 ## Context
 This project is the final submission for the 2026 DataTalks Data Engineering Zoomcamp. It demonstrates an end-to-end analytics workflow: ingestion, transformation, warehousing, and interactive analysis.
 
@@ -23,37 +27,39 @@ Source -> Data Lake (GCS) -> Data Warehouse (BigQuery) -> Dashboard (Marimo)
 │   └── buenos_aires_half_marathon_dashboard.py  # Interactive dashboard
 ├── terraform/                    # GCP infrastructure (datasets, service account)
 ├── data_discovery.ipynb          # Exploratory analysis
-└── credentials.json              # GCP service account key (not committed)
+├── credentials.json              # GCP service account key (not committed)
+└── render.yaml                   # Render service setup
 ```
 
 ## Technology Stack
-- Bruin for ELT. Bruin replaces ingestion, SQL transforms, scheduling, and checks in one workflow. Built-in checks live in the asset config, and common ones include not_null, unique, and non_negative. If a check fails, the pipeline stops, and bad data does not reach the next layer. That behaviour replaces the need for a separate testing tool in many simple pipelines.
+- Bruin Cloud for ELT
 - Google Cloud Storage for lake storage
 - BigQuery for warehouse 
 - SQL for staging and data quality logic
 - Marimo + Plotly for dashboarding and hypothesis testing
+- Render for hosting and deployment of the Marimo app
 
 ## Pipeline Overview
-1. Ingest raw race data to GCS.
+1. Ingest raw marathon data to GCS.
 2. Load data from GCS into BigQuery raw tables.
 3. Transform into staging with cleaning and standardization.
 4. Serve the curated table to a Marimo dashboard.
 
 Main ingestion assets:
-- half-marathon-bruin/half-marathon-bruin/pipeline/assets/ingestion/half_marathon_to_gcs.py
-- half-marathon-bruin/half-marathon-bruin/pipeline/assets/ingestion/half_marathon_to_bq.sql
+- half-marathon-bruin/pipeline/assets/ingestion/half_marathon_to_gcs.py
+- half-marathon-bruin/pipeline/assets/ingestion/half_marathon_to_bq.sql
 
 ## Data Model
-The model uses incremental loading and race-level deduplication.
+The model uses incremental loading and edition-level deduplication.
 
 Key design choices:
-- `edition` is converted into `edition_date` (`YYYY-01-01`) using `SAFE_CAST`.
-- Partitioning: `edition_date`
-- Clustering: `gender` and `age_group` because we want to make queries over that values.
+- `edition` is converted into `edition_date` (`YYYY-01-01`) using `SAFE_CAST` to enforce a proper DATE type for partitioning, date-based filtering, and chronological ordering.
+- Partitioning: `edition_date` to reduce scanned data and query cost for year-based filtering, trend analysis, and incremental loads by race edition.
+- Clustering: `gender` and `age_group` to optimize queries filtered by these fields.
 - Time parsing to standard numeric field: `chip_time_hours`
 - Deduplication with `ROW_NUMBER()`
 - Data quality checks via Bruin metadata
-- User identity anonymization
+- User identity anonymization to protect participant privacy, reduce re-identification risk, and ensure the analysis focuses on aggregated performance patterns rather than identifiable individuals
 
 ## Utility of This Analysis
 This analysis is useful in three ways:
@@ -67,7 +73,7 @@ Organizers can identify participation/performance patterns by demographic segmen
 3. Evidence-based conclusions:
 Instead of relying on visual intuition only, statistical tests quantify whether observed differences are likely real or due to random variation.
 
-## Statistical Models and Tests
+## Statistical Models 
 The dashboard combines descriptive and inferential statistics.
 
 ### 1) Descriptive Statistics
@@ -83,8 +89,8 @@ Why median?
 - Histogram of `chip_time_hours`
 
 Purpose:
-- Understand shape, concentration, and spread of performance.
-- Detect heavy tails, multi-modality, or unusual dispersion.
+- Understand spread of performance.
+
 
 ### 3) Group Comparison (Age and Gender)
 - Bar chart of median finish time by age group
@@ -94,19 +100,14 @@ Purpose:
 - Compare central tendency and variability across categories.
 - Visually inspect whether younger groups appear faster.
 
-### 4) Trend Analysis Over Time
-- Line chart of median finish times by year (optionally split by gender)
 
-Purpose:
-- Identify year-over-year changes in typical performance.
-
-### 5) Hypothesis Testing (Inferential)
+### 4) Hypothesis Testing (Inferential)
 Primary test in the app:
 - Mann-Whitney U test (one-tailed)
 
 Hypotheses:
-- H0: Age 18-29 has the same performance distribution as all other age groups combined.
-- H1: Age 18-29 is faster (lower finish times) than all other age groups combined.
+- H0: Younger age group has the same performance distribution as all other age groups combined.
+- H1: Younger age group is faster (lower finish times) than all other age groups combined.
 
 Why Mann-Whitney U?
 - Non-parametric: no normality assumption required.
@@ -118,20 +119,13 @@ Decision rule:
 - Reject H0 when `p < 0.05`
 
 Interpretation:
-- If rejected, data supports that 18-29 runners are significantly faster.
+- If rejected, data supports that younger runners are significantly faster.
 - If not rejected, evidence is insufficient to conclude they are faster.
 
-### Why Marimo?
-## Dashboard Outputs
 The dashboard provides:
-- KPI cards (finishers, median, fastest, slowest)
 - Finish-time distribution histogram
+- Pairwise comparison by gender for category winners
 - Hypothesis test summary with p-value and verdict
-
-## Easy Deploy to Github Pages
-- Reactivity via DAG: Marino analyzes each Python cell to build a Directed Acyclic Graph (DAG) based on variable usage. When a cell updates or a UI widget (e.g., slider) changes, only the downstream cells re-run. This ensures consistent, reproducible outputs and eliminates hidden-state bugs common in Jupyter (docs.marimo.io).
-- Deterministic Execution Order: Unlike traditional notebooks, execution order is driven by the DAG rather than cell position. 
-- Storing Notebooks as .py Files: Marimo notebooks are pure Python files—not JSON blobs. This makes them Git-friendly, easy to diff, lint, import into scripts, and execute directly from the CLI (marimo.io).
 
 Tile 1
 ![alt text](images/marimo_dashboard_tile_1.png)
@@ -139,13 +133,22 @@ Tile 1
 Tile 2
 ![alt text](images/marimo_dashboard_tile_2.png)
 
+### Marimo App 
+#### Easy Deploy 
+- Reactivity via DAG: Marimo analyzes each Python cell to build a Directed Acyclic Graph (DAG) based on variable usage. When a cell updates or a UI widget (e.g., slider) changes, only the downstream cells re-run. This ensures consistent, reproducible outputs and eliminates hidden-state bugs common in Jupyter (docs.marimo.io).
+- Deterministic Execution Order: Unlike traditional notebooks, execution order is driven by the DAG rather than cell position. 
+- Storing Notebooks as .py Files: Marimo notebooks are pure Python files—not JSON blobs. This makes them Git-friendly, easy to diff, lint, import into scripts, and execute directly from the CLI (marimo.io).
+
+
+
 ## Bruin Cloud Deployment
 
-This project is also deployed to Bruin Cloud for managed pipeline orchestration.
+This project is also deployed to Bruin Cloud for managed pipeline orchestration and scheduling.
 
 - Pipeline: `half_marathon`
 - Environment: `production`
-- Bruin Cloud run URL: add your deployment URL here
+- Bruin Cloud run URL: [https://cloud.getbruin.com/personalstq79r2j/dashboard](https://cloud.getbruin.com/personalstq79r2j/dashboard)
+
 ![alt text](images/bruin_cloud_dashboard.png)
 ![alt text](images/bruin_scheduling.png)
 
@@ -161,7 +164,42 @@ The ingestion pipeline reads the following variables (set them in your shell or 
 | `GCS_PREFIX` | No | Path prefix inside the bucket | `raw/half_marathon_21k` |
 | `GCS_LOCATION` | No | GCS/BigQuery region | `us-central1` |
 
-## How to Run
+## Render Deployment
+
+This project is deployed on Render as a **Web Service** running the Marimo app.
+
+### Live URL
+- https://buenos-aires-half-marathon-age-group.onrender.com/
+
+### Service Configuration
+- Service type: `Web Service`
+- Runtime: `Python`
+- Region: `Oregon`
+- Plan: `Free` (or higher)
+
+### Build and Start Commands
+```bash
+# Build
+uv sync
+
+# Start
+cd half-marathon-marimo && uv run marimo run buenos_aires_half_marathon_dashboard.py --host 0.0.0.0 --port $PORT
+```
+
+### Environment Setup (Render)
+- `GOOGLE_APPLICATION_CREDENTIALS=/etc/secrets/credentials.json`
+
+Add a secret file in Render:
+- File name: `credentials.json`
+- Mount path: `/etc/secrets/credentials.json`
+- Content: service account JSON with BigQuery access
+
+### Deployment Flow
+1. Push changes to `main`.
+2. Render auto-builds and deploys from the connected GitHub repository.
+3. Open the live URL and confirm dashboard data loads.
+
+## How to Run Locally
 
 ### Option A: Terraform (Recommended)
 
@@ -211,9 +249,5 @@ Local development:
 uv run marimo run half-marathon-marimo/buenos_aires_half_marathon_dashboard.py
 ```
 
-### Extra
-```bash
-bruin ai enhance
-``` 
 ## Notes
-For project requirements and evaluation criteria, refer to DataTalksClub Zoomcamp project guidelines.
+For project requirements and evaluation criteria, refer to [DataTalksClub Zoomcamp project guidelines](https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main/projects).
