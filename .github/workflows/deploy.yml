@@ -29,7 +29,7 @@ jobs:
       # 5. Export your Marimo dashboard to static HTML (WASM-powered)
       - name: Export Marimo notebooks
         run: |
-          uv run marimo export html-wasm half-marathon-marimo/buenos_aires_half_marathon_dashboard.py -o index.html --mode run
+          uv run marimo export html-wasm half-marathon-marimo/buenos_aires_half_marathon_dashboard.py -o . --mode run
 
       # 6. Add .nojekyll to prevent GitHub Pages from ignoring files/folders starting with "_"
       - name: Add .nojekyll
