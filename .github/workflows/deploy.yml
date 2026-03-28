@@ -33,13 +33,13 @@ jobs:
 
       # 6. Add .nojekyll to prevent GitHub Pages from ignoring files/folders starting with "_"
       - name: Add .nojekyll
-        run: touch output_dir/.nojekyll
+        run: touch .nojekyll
 
       # 7. Upload the exported HTML as an artifact for deployment
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: output_dir
+          path: index.html
 
   deploy:
     name: Deploy to GitHub Pages
