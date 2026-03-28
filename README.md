@@ -130,11 +130,20 @@ The dashboard provides:
 - Finish-time distribution histogram
 - Hypothesis test summary with p-value and verdict
 
-## Deploy to Github Pages
-Core Concepts
-Reactivity via DAG Marimo analyzes each Python cell to build a Directed Acyclic Graph (DAG) based on variable usage. When a cell updates or a UI widget (e.g., slider) changes, only the downstream cells re-run. This ensures consistent, reproducible outputs and eliminates hidden-state bugs common in Jupyter (docs.marimo.io).
-Deterministic Execution Order Unlike traditional notebooks, execution order is driven by the DAG rather than cell position. You can rearrange cells freely — Marimo will always run them in the logically correct order (GitHub, Real Python).
-Storing Notebooks as .py Files Marimo notebooks are pure Python files—not JSON blobs. This makes them Git-friendly, easy to diff, lint, import into scripts, and execute directly from the CLI (marimo.io).
+## Easy Deploy to Github Pages
+- Reactivity via DAG: Marino analyzes each Python cell to build a Directed Acyclic Graph (DAG) based on variable usage. When a cell updates or a UI widget (e.g., slider) changes, only the downstream cells re-run. This ensures consistent, reproducible outputs and eliminates hidden-state bugs common in Jupyter (docs.marimo.io).
+- Deterministic Execution Order: Unlike traditional notebooks, execution order is driven by the DAG rather than cell position. 
+- Storing Notebooks as .py Files: Marimo notebooks are pure Python files—not JSON blobs. This makes them Git-friendly, easy to diff, lint, import into scripts, and execute directly from the CLI (marimo.io).
+
+## Bruin Cloud Deployment
+
+This project is also deployed to Bruin Cloud for managed pipeline orchestration.
+
+- Pipeline: `half_marathon`
+- Environment: `production`
+- Bruin Cloud run URL: add your deployment URL here
+![alt text](images/bruin_cloud_dashboard.png)
+![alt text](images/bruin_scheduling.png)
 
 ## Environment Variables
 
@@ -168,7 +177,7 @@ cd ..
 
 Use this if you prefer not to run Terraform.
 
-#### B.1) Environment
+#### B.1) Environment and Reproducibility
 ```bash
 uv sync
 export GOOGLE_APPLICATION_CREDENTIALS=your_dir/credentials.json
@@ -191,7 +200,7 @@ bq --location=us-central1 mk -d moonlit-state-486723-r7:raw
 uv run bruin run half-marathon-bruin/pipeline/pipeline.yml
 ```
 
-### Run the Marimo app or access Github Pages
+### Run the Marimo app or access Github Pages [text](http://ba.half.marathon/)
 ```bash
 uv run marimo run half-marathon-marimo/buenos_aires_half_marathon_dashboard.py
 ```
