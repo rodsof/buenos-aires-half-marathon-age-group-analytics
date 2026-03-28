@@ -1,6 +1,10 @@
 """@bruin
 name: ingestion.half_marathon_gcs
 type: python
+connection: gcp
+secrets:
+    - key: gcp
+      inject_as: gcp
 @bruin"""
 
 from __future__ import annotations
@@ -22,6 +26,7 @@ from half_marathon_utils import (
     upload_directory_to_gcs,
 )
 
+
 def _read_bruin_vars() -> dict[str, str]:
     raw_vars = os.getenv("BRUIN_VARS", "{}")
     try:
@@ -35,14 +40,20 @@ def materialize() -> list[str]:
 
     dataset = vars_payload.get("dataset", os.getenv("KAGGLE_DATASET", DEFAULT_DATASET))
     bucket_name = vars_payload.get("gcs_bucket", os.getenv("GCS_BUCKET", "")).strip()
-    gcs_prefix = vars_payload.get("gcs_prefix", os.getenv("GCS_PREFIX", "raw/half_marathon_21k"))
+    gcs_prefix = vars_payload.get(
+        "gcs_prefix", os.getenv("GCS_PREFIX", "raw/half_marathon_21k")
+    )
 
     if not bucket_name:
         raise ValueError("GCS bucket name is required via gcs_bucket or GCS_BUCKET.")
 
     local_dataset_dir = download_dataset(dataset)
-    gcs_location = vars_payload.get("gcs_location", os.getenv("GCS_LOCATION", "us-central1"))
-    gcp_project_id = vars_payload.get("gcp_project_id", os.getenv("GCP_PROJECT_ID", "")) or None
+    gcs_location = vars_payload.get(
+        "gcs_location", os.getenv("GCS_LOCATION", "us-central1")
+    )
+    gcp_project_id = (
+        vars_payload.get("gcp_project_id", os.getenv("GCP_PROJECT_ID", "")) or None
+    )
 
     ensure_gcs_bucket(
         bucket_name=bucket_name,
