@@ -1,5 +1,5 @@
 name: half_marathon_ingestion
-schedule: daily
+schedule: weekly
 start_date: "2022-01-01"
 
 default_connections:
