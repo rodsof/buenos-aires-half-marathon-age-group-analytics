@@ -217,37 +217,6 @@ def _(fig_age, mo):
 
 
 @app.cell
-def _(GENDER_COL, df_f, go, px):
-    if GENDER_COL:
-        fig_gender = px.box(
-            df_f,
-            x=GENDER_COL,
-            y="chip_time_hours",
-            color=GENDER_COL,
-            points="outliers",
-            labels={GENDER_COL: "Gender", "chip_time_hours": "Finish time (s)"},
-            title="Finish-time distribution by gender",
-        )
-    else:
-        fig_gender = go.Figure().update_layout(title="Gender column not found")
-    return (fig_gender,)
-
-
-@app.cell
-def _(fig_gender, mo):
-    mo.vstack(
-        [
-            mo.md(
-                "This box plot summarizes finish-time variability by gender. The center line marks the median, "
-                "the box captures the middle 50% of results, and outliers highlight unusually fast or slow finishers."
-            ),
-            fig_gender,
-        ]
-    )
-    return
-
-
-@app.cell
 def _(AGE_COL, GENDER_COL, df_f, mo):
     def _age_lower_bound(label):
         s = str(label).strip()

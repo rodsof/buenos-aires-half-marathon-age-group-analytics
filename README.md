@@ -1,7 +1,5 @@
 # Buenos Aires Half Marathon (21K) Analytics
 
-[![Dashboard](https://img.shields.io/badge/Dashboard-Live-brightgreen)](https://rodsof.github.io/SR-zoom-datacamp-2026/buenos_aires_half_marathon_dashboard.html)
-
 ## Context
 This project is the final submission for the 2026 DataTalks Data Engineering Zoomcamp. It demonstrates an end-to-end analytics workflow: ingestion, transformation, warehousing, and interactive analysis.
 
@@ -135,6 +133,12 @@ The dashboard provides:
 - Deterministic Execution Order: Unlike traditional notebooks, execution order is driven by the DAG rather than cell position. 
 - Storing Notebooks as .py Files: Marimo notebooks are pure Python files—not JSON blobs. This makes them Git-friendly, easy to diff, lint, import into scripts, and execute directly from the CLI (marimo.io).
 
+Tile 1
+![alt text](images/marimo_dashboard_tile_1.png)
+
+Tile 2
+![alt text](images/marimo_dashboard_tile_2.png)
+
 ## Bruin Cloud Deployment
 
 This project is also deployed to Bruin Cloud for managed pipeline orchestration.
@@ -200,7 +204,9 @@ bq --location=us-central1 mk -d moonlit-state-486723-r7:raw
 uv run bruin run half-marathon-bruin/pipeline/pipeline.yml
 ```
 
-### Run the Marimo app or access Github Pages [text](http://ba.half.marathon/)
+### Run the Marimo app 
+
+Local development:
 ```bash
 uv run marimo run half-marathon-marimo/buenos_aires_half_marathon_dashboard.py
 ```
