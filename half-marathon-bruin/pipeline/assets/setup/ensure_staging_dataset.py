@@ -13,7 +13,8 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
+from google.cloud import bigquery
+from google.oauth2 import service_account
 
 
 def _read_bruin_vars() -> dict[str, str]:
@@ -31,30 +32,39 @@ def materialize() -> dict[str, str]:
     dataset_id = vars_payload.get("target_dataset", "staging")
     location = vars_payload.get("gcs_location", "us-central1")
 
-    cmd = [
-        "bq",
-        f"--location={location}",
-        "mk",
-        "-d",
-        f"{project_id}:{dataset_id}",
-    ]
+    # Get credentials from Bruin connection
+    raw_conn = os.environ.get("gcp")
+    if not raw_conn:
+        raise RuntimeError("No gcp connection found in environment")
 
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    conn = json.loads(raw_conn)
 
-    # bq mk returns non-zero if dataset already exists.
-    # Treat that case as success to keep setup idempotent.
-    if result.returncode != 0:
-        stderr = result.stderr or ""
-        already_exists = (
-            "Already Exists" in result.stdout or "already exists" in result.stdout
+    # Handle service account JSON
+    if conn.get("service_account_json"):
+        info = conn["service_account_json"]
+        if isinstance(info, str):
+            info = json.loads(info)
+        creds = service_account.Credentials.from_service_account_info(info)
+    elif conn.get("service_account_file"):
+        creds = service_account.Credentials.from_service_account_file(
+            conn["service_account_file"]
         )
-        if not already_exists:
-            raise RuntimeError(
-                f"Failed to create dataset {project_id}:{dataset_id}\n"
-                f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
-            )
-        else:
-            print(f"Dataset {project_id}:{dataset_id} already exists. Continuing...")
+    else:
+        raise RuntimeError("No service account credentials found in gcp connection")
+
+    # Create BigQuery client
+    client = bigquery.Client(project=project_id, credentials=creds)
+
+    # Create dataset
+    dataset_ref = f"{project_id}.{dataset_id}"
+    dataset = bigquery.Dataset(dataset_ref)
+    dataset.location = location
+
+    try:
+        dataset = client.create_dataset(dataset, exists_ok=True)
+        print(f"Dataset {dataset_ref} ready at location {location}")
+    except Exception as e:
+        raise RuntimeError(f"Failed to create dataset {dataset_ref}: {e}")
 
     return {
         "project_id": project_id,
