@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: marimo-dashboard
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: uv sync
+    startCommand: cd half-marathon-marimo && uv run marimo run buenos_aires_half_marathon_dashboard.py --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        scope: run
+        value: /etc/secrets/credentials.json
