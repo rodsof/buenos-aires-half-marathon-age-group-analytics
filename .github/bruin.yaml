@@ -1,0 +1,31 @@
+name: Run Bruin Pipeline
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # every day at 6 AM
+  workflow_dispatch:
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Install Bruin
+        run: uv tool install bruin
+
+      - name: Set env vars
+        env:
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+          GOOGLE_APPLICATION_CREDENTIALS: credentials.json
+        run: |
+          echo '${{ secrets.GCP_SERVICE_ACCOUNT }}' > credentials.json
+
+      - name: Run pipeline
+        run: bruin run

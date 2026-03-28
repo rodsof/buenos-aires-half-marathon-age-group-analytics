@@ -1,0 +1,12 @@
+{
+	"servers": {
+		"de-zoomcamp-mcp-server-cbc08599": {
+			"type": "stdio",
+			"command": "bruin",
+			"args": [
+				"mcp"
+			]
+		}
+	},
+	"inputs": []
+}
