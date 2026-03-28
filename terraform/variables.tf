@@ -37,5 +37,5 @@ variable "gcs_bucket_name" {
 variable "service_account_id" {
   type        = string
   description = "Service account ID for Bruin pipeline"
-  default     = "bruin-half-marathon"
+  default     = "sr-data-engineering"
 }
