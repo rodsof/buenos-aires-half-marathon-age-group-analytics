@@ -83,7 +83,7 @@ resource "google_bigquery_dataset_iam_member" "bruin_job_user" {
 
 # ===== IAM: GCS Bucket Access =====
 resource "google_storage_bucket_iam_member" "bruin_bucket_admin" {
-  bucket = google_storage_bucket.name
+  bucket = google_storage_bucket.data_lake.name
   role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${google_service_account.bruin_pipeline.email}"
 }
